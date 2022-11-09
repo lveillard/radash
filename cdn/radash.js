@@ -743,7 +743,6 @@ var radash = (function (exports) {
 
   exports.alphabetical = alphabetical;
   exports.boil = boil;
-  exports.camal = camel;
   exports.camel = camel;
   exports.capitalize = capitalize;
   exports.chain = chain;
