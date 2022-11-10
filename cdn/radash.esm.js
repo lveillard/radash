@@ -1,3 +1,81 @@
+const isSymbol = (value) => {
+  return !!value && value.constructor === Symbol;
+};
+const isArray = (value) => {
+  return !!value && value.constructor === Array;
+};
+const isObject = (value) => {
+  return !!value && value.constructor === Object;
+};
+const isFunction = (value) => {
+  return !!(value && value.constructor && value.call && value.apply);
+};
+const isString = (value) => {
+  return typeof value === "string" || value instanceof String;
+};
+const isInt = (value) => {
+  return isNumber(value) && value % 1 === 0;
+};
+const isFloat = (value) => {
+  return isNumber(value) && value % 1 !== 0;
+};
+const isNumber = (value) => {
+  try {
+    return Number(value) === value;
+  } catch {
+    return false;
+  }
+};
+const isDate = (value) => {
+  return Object.prototype.toString.call(value) === "[object Date]";
+};
+const isEmpty = (value) => {
+  if (value === true || value === false)
+    return true;
+  if (value === null || value === void 0)
+    return true;
+  if (isNumber(value))
+    return value === 0;
+  if (isDate(value))
+    return isNaN(value.getTime());
+  if (isFunction(value))
+    return false;
+  if (isSymbol(value))
+    return false;
+  const length = value.length;
+  if (isNumber(length))
+    return length === 0;
+  const size = value.size;
+  if (isNumber(size))
+    return size === 0;
+  const keys = Object.keys(value).length;
+  return keys === 0;
+};
+const isEqual = (x, y) => {
+  if (Object.is(x, y))
+    return true;
+  if (x instanceof Date && y instanceof Date) {
+    return x.getTime() === y.getTime();
+  }
+  if (x instanceof RegExp && y instanceof RegExp) {
+    return x.toString() === y.toString();
+  }
+  if (typeof x !== "object" || x === null || typeof y !== "object" || y === null) {
+    return false;
+  }
+  const keysX = Reflect.ownKeys(x);
+  const keysY = Reflect.ownKeys(y);
+  if (keysX.length !== keysY.length)
+    return false;
+  for (let i = 0; i < keysX.length; i++) {
+    if (!Reflect.has(y, keysX[i]))
+      return false;
+    if (!isEqual(x[keysX[i]], y[keysX[i]]))
+      return false;
+  }
+  return true;
+};
+
 const group = (array, getGroupId) => {
   return array.reduce((acc, item) => {
     const groupId = getGroupId(item);
@@ -108,8 +186,10 @@ function* range(start, end, step = 1) {
       break;
   }
 }
-const list = (start, end, step = 1) => {
-  return Array.from(range(start, end, step));
+const list = (startOrLength, end, valueOrMapper = (i) => i, step = 1) => {
+  const mapper = isFunction(valueOrMapper) ? valueOrMapper : () => valueOrMapper;
+  const start = end ? startOrLength : 0;
+  return Array.from(range(start, end ?? startOrLength, step), mapper);
 };
 const flat = (lists) => {
   return lists.reduce((acc, list2) => {
@@ -407,84 +487,6 @@ const toInt = (value, defaultValue) => {
   }
   const result = parseInt(value);
   return isNaN(result) ? def : result;
-};
-
-const isSymbol = (value) => {
-  return !!value && value.constructor === Symbol;
-};
-const isArray = (value) => {
-  return !!value && value.constructor === Array;
-};
-const isObject = (value) => {
-  return !!value && value.constructor === Object;
-};
-const isFunction = (value) => {
-  return !!(value && value.constructor && value.call && value.apply);
-};
-const isString = (value) => {
-  return typeof value === "string" || value instanceof String;
-};
-const isInt = (value) => {
-  return isNumber(value) && value % 1 === 0;
-};
-const isFloat = (value) => {
-  return isNumber(value) && value % 1 !== 0;
-};
-const isNumber = (value) => {
-  try {
-    return Number(value) === value;
-  } catch {
-    return false;
-  }
-};
-const isDate = (value) => {
-  return Object.prototype.toString.call(value) === "[object Date]";
-};
-const isEmpty = (value) => {
-  if (value === true || value === false)
-    return true;
-  if (value === null || value === void 0)
-    return true;
-  if (isNumber(value))
-    return value === 0;
-  if (isDate(value))
-    return isNaN(value.getTime());
-  if (isFunction(value))
-    return false;
-  if (isSymbol(value))
-    return false;
-  const length = value.length;
-  if (isNumber(length))
-    return length === 0;
-  const size = value.size;
-  if (isNumber(size))
-    return size === 0;
-  const keys = Object.keys(value).length;
-  return keys === 0;
-};
-const isEqual = (x, y) => {
-  if (Object.is(x, y))
-    return true;
-  if (x instanceof Date && y instanceof Date) {
-    return x.getTime() === y.getTime();
-  }
-  if (x instanceof RegExp && y instanceof RegExp) {
-    return x.toString() === y.toString();
-  }
-  if (typeof x !== "object" || x === null || typeof y !== "object" || y === null) {
-    return false;
-  }
-  const keysX = Reflect.ownKeys(x);
-  const keysY = Reflect.ownKeys(y);
-  if (keysX.length !== keysY.length)
-    return false;
-  for (let i = 0; i < keysX.length; i++) {
-    if (!Reflect.has(y, keysX[i]))
-      return false;
-    if (!isEqual(x[keysX[i]], y[keysX[i]]))
-      return false;
-  }
-  return true;
 };
 
 const shake = (obj, filter = (x) => x === void 0) => {
